@@ -21,8 +21,6 @@ module Chimp
     end
     
     def describe_work
-      require 'pry'
-      binding.pry
       return "ExecRightScript job_id=#{@job_id} uuid=#{@job_uuid} script=\"#{@exec.params['right_script']['name']}\" server=\"#{@server.nickname}\""
     end
     
