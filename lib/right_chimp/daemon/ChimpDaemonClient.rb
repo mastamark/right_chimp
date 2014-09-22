@@ -16,6 +16,7 @@ module Chimp
 
         if response.code > 199 and response.code < 300
           id = YAML::load(response.body)['id']
+          Logger.log "The uuid returned for this task was: "+id.to_s
           return true
         else
           $stderr.puts "WARNING: error submitting to chimpd! response code: #{reponse.code}"

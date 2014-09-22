@@ -23,6 +23,7 @@ module Chimp
       @template = h[:template]        || nil
 
       @job_id = h[:job_id]            || nil
+      @job_uuid = h[:job_uuid]        || nil
       @group = h[:group]              || nil
       @exec = h[:exec]                || nil
       @inputs = h[:inputs]            || nil

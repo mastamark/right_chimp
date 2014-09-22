@@ -17,6 +17,7 @@ require 'highline/import'
 require 'right_api_client'
 require 'rest-client'
 require 'logger'
+require 'securerandom'
 
 module Chimp
   require 'right_chimp/version'

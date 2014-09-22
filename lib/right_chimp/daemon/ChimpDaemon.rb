@@ -340,8 +340,15 @@ module Chimp
         #    q.push(group, task)
         #  end
         if verb == 'process' or verb == 'add'
+          #
+          # This needs to be the actual task id, as opposed to always 0
+          # TEMP: Create a uuid, and store it in the Chimp object
+          id = SecureRandom.uuid
+          Logger.log "Generated UUID:" + id.to_s
+          payload.job_uuid = id
+
           ChimpDaemon.instance.chimp_queue.push payload
-          id = 0
+
         elsif verb == 'update'
           puts "UPDATE"
           q.get_job(job_id).status = payload.status

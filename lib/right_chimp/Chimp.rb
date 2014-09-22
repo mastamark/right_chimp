@@ -23,7 +23,7 @@ module Chimp
         # Figure out url to hit:
         #
         creds[:api_url]="https://"+URI.parse(creds[:api_url]).host
-        @client=RightApi::Client.new(:email => creds[:user], :password => creds[:pass], :account_id => creds[:account], :api_url => creds[:api_url])
+        @client=RightApi::Client.new(:email => creds[:user], :password => creds[:pass], :account_id => creds[:account], :api_url => creds[:api_url], :timeout => nil)
       rescue
         puts "##############################################################################"
         puts "Error, credentials file: could not be loaded correctly"
@@ -169,8 +169,7 @@ module Chimp
     attr_accessor :concurrency, :delay, :retry_count, :hold, :progress, :prompt,
                   :quiet, :use_chimpd, :chimpd_host, :chimpd_port, :tags, :array_names,
                   :deployment_names, :script, :servers, :ssh, :report, :interactive, :action,
-                  :limit_start, :limit_end, :dry_run, :group, :job_id, :verify
-
+                  :limit_start, :limit_end, :dry_run, :group, :job_id, :job_uuid, :verify
     #
     # These class variables control verbosity
     #
@@ -209,6 +208,7 @@ module Chimp
       @group             = :default
       @group_type        = :parallel
       @group_concurrency = 1
+      @job_uuid          = 0
 
       #
       # Options for selecting objects to work on
