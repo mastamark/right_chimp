@@ -12,6 +12,8 @@ module Chimp
       attempts = 3
 
       begin
+        require 'pry'
+        binding.pry
         response = RestClient.post uri, chimp_object.to_yaml
 
         if response.code > 199 and response.code < 300
