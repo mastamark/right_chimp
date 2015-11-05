@@ -972,24 +972,24 @@ module Chimp
       #
       verify("The following objects failed:", results_display, false)
 
-      while true
-        puts "(R)etry failed jobs"
-        puts "(A)bort chimp run"
-        puts "(I)gnore errors and continue"
-        command = gets()
-
-        if command =~ /^a/i
-          puts "Aborting!"
-          exit 1
-        elsif command =~ /^i/i
-          puts "Ignoring errors and continuing"
-          exit 0
-        elsif command =~ /^r/i
-          puts "Retrying..."
-          ChimpQueue.instance.group[group].requeue_failed_jobs!
-          return false
-        end
-      end
+      # while true
+      #   puts "(R)etry failed jobs"
+      #   puts "(A)bort chimp run"
+      #   puts "(I)gnore errors and continue"
+      #   command = gets()
+      #
+      #   if command =~ /^a/i
+      #     puts "Aborting!"
+      #     exit 1
+      #   elsif command =~ /^i/i
+      #     puts "Ignoring errors and continuing"
+      #     exit 0
+      #   elsif command =~ /^r/i
+      #     puts "Retrying..."
+      #     ChimpQueue.instance.group[group].requeue_failed_jobs!
+      #     return false
+      #   end
+      # end
     end
 
     #
@@ -1138,7 +1138,6 @@ module Chimp
               all = ChimpDaemonClient.retrieve_group_info(@chimpd_host, @chimpd_port, @group, :all)
             rescue RestClient::ResourceNotFound
               sleep 5
-              $stdout.print "\nINFO: Waiting on group #{@group}"
               retry
             end
 
