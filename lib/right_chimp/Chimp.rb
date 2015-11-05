@@ -985,6 +985,7 @@ module Chimp
       #     puts "Ignoring errors and continuing"
       #     exit 0
       #   elsif command =~ /^r/i
+      #   elsif commanddef verify =~ /^r/i
       #     puts "Retrying..."
       #     ChimpQueue.instance.group[group].requeue_failed_jobs!
       #     return false
@@ -1157,12 +1158,12 @@ module Chimp
 
           #
           # If verify_results returns true, then ask chimpd to requeue all failed jobs.
-          #
-          if verify_results(@group)
-            break
-          else
-            ChimpDaemonClient.retry_group(@chimpd_host, @chimpd_port, @group)
-          end
+          # HACK FOR LEEROY
+          # if verify_results(@group)
+          #   break
+          # else
+          #   ChimpDaemonClient.retry_group(@chimpd_host, @chimpd_port, @group)
+          # end
         end
       ensure
         #$stdout.print " done\n"
