@@ -562,26 +562,18 @@ module Chimp
 
           #instance the queue
           queue = ChimpQueue.instance
-          jobs = queue.get_jobs
 
-          #generate some variables for the template
-          require 'pry'
-          binding.pry
+          job_types = [ :running, :error, :done ]
 
+          jobs = {}
 
-          count_jobs_running = queue.get_jobs_by_status(:running).size
-          count_jobs_queued  = queue.get_jobs_by_status(:none).size
-          count_jobs_holding  = queue.get_jobs_by_status(:holding).size
-          count_jobs_failed  = queue.get_jobs_by_status(:error).size
-          count_jobs_done    = queue.get_jobs_by_status(:done).size
-          count_jobs_processing = queue.get_jobs_by_status(:processing).size
+          job_types.each do |type|
+            jobs[type] = queue.get_jobs_by_status(type).map do |job|
+              {:id => job.job_id, :name => job.exec.params["right_script"]["name"]}
+            end
+          end
 
-          resp.body = @template.result(binding)
-
-          resp.body = @template.result(binding)
-
-    stats_hash = {"running" => queue.get_jobs_by_status(:running).size, "waiting" => queue.get_jobs_by_status(:waiting).size, "failed" => queue.get_jobs_by_status(:error).size, "done" => queue.get_jobs_by_status(:done).size, "processing" => ChimpDaemon.instance.proc_counter.to_s, "holding" => queue.get_jobs_by_status(:holding).size }
-          resp.body = JSON.generate(stats_hash)
+          resp.body = jobs.to_json
 
           raise WEBrick::HTTPStatus::OK
         end
