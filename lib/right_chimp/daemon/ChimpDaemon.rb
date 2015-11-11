@@ -532,9 +532,55 @@ module Chimp
         #
         # Check if we are asked for stats
         #
-        if req.request_uri.path =~ /stats/
+        if req.request_uri.path =~ /stats$/
+          queue = ChimpQueue.instance
+          stats = ""
+          stats << "running: #{queue.get_jobs_by_status(:running).size} / "
+          stats << "waiting: #{queue.get_jobs_by_status(:none).size} / "
+          stats << "failed: #{queue.get_jobs_by_status(:error).size} / "
+          stats << "done: #{queue.get_jobs_by_status(:done).size} / "
+          stats << "processing: #{ChimpDaemon.instance.proc_counter.to_s} / "
+          stats << "\n"
+
+          resp.body = stats
+
+          raise WEBrick::HTTPStatus::OK
+        end
+
+
+        if req.request_uri.path =~ /stats\.json$/
           queue = ChimpQueue.instance
 	  stats_hash = {"running" => queue.get_jobs_by_status(:running).size, "waiting" => queue.get_jobs_by_status(:waiting).size, "failed" => queue.get_jobs_by_status(:error).size, "done" => queue.get_jobs_by_status(:done).size, "processing" => ChimpDaemon.instance.proc_counter.to_s, "holding" => queue.get_jobs_by_status(:holding).size }
+          resp.body = JSON.generate(stats_hash)
+
+          raise WEBrick::HTTPStatus::OK
+        end
+
+        if req.request_uri.path =~ /jobs\.json$/
+          #load up our json template
+          @template = ERB.new(File.read(File.join(template_path, "all_jobs_json.erb")), nil, ">")
+
+          #instance the queue
+          queue = ChimpQueue.instance
+          jobs = queue.get_jobs
+
+          #generate some variables for the template
+          require 'pry'
+          binding.pry
+
+
+          count_jobs_running = queue.get_jobs_by_status(:running).size
+          count_jobs_queued  = queue.get_jobs_by_status(:none).size
+          count_jobs_holding  = queue.get_jobs_by_status(:holding).size
+          count_jobs_failed  = queue.get_jobs_by_status(:error).size
+          count_jobs_done    = queue.get_jobs_by_status(:done).size
+          count_jobs_processing = queue.get_jobs_by_status(:processing).size
+
+          resp.body = @template.result(binding)
+
+          resp.body = @template.result(binding)
+
+    stats_hash = {"running" => queue.get_jobs_by_status(:running).size, "waiting" => queue.get_jobs_by_status(:waiting).size, "failed" => queue.get_jobs_by_status(:error).size, "done" => queue.get_jobs_by_status(:done).size, "processing" => ChimpDaemon.instance.proc_counter.to_s, "holding" => queue.get_jobs_by_status(:holding).size }
           resp.body = JSON.generate(stats_hash)
 
           raise WEBrick::HTTPStatus::OK

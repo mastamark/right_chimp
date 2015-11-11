@@ -1,0 +1,176 @@
+<html><head>
+<title>chimpd</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+<meta http-equiv="refresh" content="5">
+<link rel="stylesheet" href="default.css" title="default" />
+<link rel="alternate stylesheet" href="greenscreen.css" title="greenscreen" />
+<link rel="alternate stylesheet" href="hotdogstand.css" title="hotdogstand" />
+<link rel="alternate stylesheet" href="invertedhotdogstand.css" title="invertedhotdogstand" />
+<script src="styleswitcher.js"></script>
+
+<script type="text/javascript">
+
+  port = <%= ChimpDaemon.instance.port.to_s %>
+
+  function chimpd_job_control(obj, url) {
+    obj.style.color = "red";
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", url, true);
+    xmlhttp.send();
+  }
+
+</script>
+
+</head><body>
+
+<div id="stats">
+
+<h1>chimpd <%=VERSION%> console</h1>
+<p style="font-size: 90%; padding-left: 10px">FEATURING CUTTING EDGE META REFRESH<br/> TECHNOLOGY
+SINCE 2012</p>
+
+<h3>Queue Status</h3>
+
+<table>
+<tr>
+  <td>Jobs running:</td>
+  <td><%= count_jobs_running %>
+</tr><tr>
+  <td>Jobs holding:</td>
+  <td><%= count_jobs_holding %>
+</tr><tr>
+  <td>Jobs waiting:</td>
+  <td><%= count_jobs_queued %>
+</tr><tr>
+  <td>Jobs failed:</td>
+  <td><%= count_jobs_failed %>
+</tr><tr>
+  <td>Jobs completed:</td>
+  <td><%= count_jobs_done %>
+</tr><tr>
+  <td>Jobs being processed:</td>
+  <td><%= ChimpDaemon.instance.proc_counter.to_s %>
+</tr>
+</table>
+
+<h3>Job Groups</h3>
+<div id="groups" width="90%" >
+  <ol style="margin: 0; padding: 3px;">
+  <% queue.group.values.each do |g| %>
+    <li>
+      [<%= sprintf( "%03d", g.get_jobs_by_status(:running).size) %>/<%= sprintf( "%03d", g.get_job_ids.size) %> <%= g.short_name  %>] <% if group_name == g.group_id %><span class="highlight"><%=g.group_id%></span><% else %><a href="/display/group/<%=g.group_id%>"><%= g.group_id %></a><% end %>
+
+    </li>
+  <% end %>
+  </ol>
+</div>
+
+
+<h3>Filter Results By Job Status</h3>
+
+<p>[
+<% if job_filter == 'running' or job_filter == nil %>running<% else %><a href="/display/running">running</a><% end %> |
+<% if job_filter == 'holding' %>holding<% else %><a href="/display/holding">holding</a> <% end %> |
+<% if job_filter == 'none' %>waiting<% else %><a href="/display/none">waiting</a> <% end %> |
+<% if job_filter == 'done' %>completed<% else %><a href="/display/done">completed</a><% end %> |
+<% if job_filter == 'error' %>failed<% else %><a href="/display/error">failed</a><% end %>
+ |
+<% if job_filter == 'all' %>all<% else %><a href="/display/all">all</a> <% end %> ]
+</p>
+
+<h3>Commands</h3>
+<ol>
+  <li><a href="#" onclick="chimpd_job_control(this, '/job/running/cancel')">cancel running jobs</a></li>
+  <li><a href="#" onclick="chimpd_job_control(this, '/job/error/retry')">retry failed jobs </a></li>
+  <li><a href="#" onclick="chimpd_job_control(this, '/job/all/report')">download execution report</a></li>
+</ol>
+
+<h3>Theme</h3>
+<ol>
+  <li> <a href="#" onclick="setActiveStyleSheet('default')">default</a></li>
+  <li> <a href="#" onclick="setActiveStyleSheet('greenscreen')">green screen</a></li>
+  <li> <a href="#" onclick="setActiveStyleSheet('hotdogstand')">hot dog stand</a></li>
+  <li> <a href="#" onclick="setActiveStyleSheet('invertedhotdogstand')">inverted hot dog stand</a></li>
+</ol>
+
+</div>
+
+<div id="jobs">
+<% if group_name == nil %>
+  <h1>Job Information</h1>
+<% else %>
+  <h1>Job Group: <%=CGI::escapeHTML(group_name)%></h1>
+<% end %>
+
+<%
+#
+# Print out all the jobs
+#
+jobs.sort! do |a,b|
+  a.job_id <=> b.job_id
+end
+
+jobs.each do |j|
+  next unless j
+
+  status      = j.status
+  id          = j.job_id
+
+  server_name = CGI::escapeHTML(j.server.params['nickname']) if j.server
+
+  if j.exec
+    action      = j.exec.params.to_s
+    action      = j.exec.params['right_script']['name'] if j.exec.params['right_script']
+  else
+    action      = "unknown"
+  end
+
+  if job_filter and not (job_filter == 'all' or job_filter == 'group' )
+    next unless status == job_filter.to_sym
+  end
+
+  execution_time_seconds = j.get_total_exec_time
+  h = (execution_time_seconds/3600).to_i
+  m = (execution_time_seconds/60 - h*60).to_i
+  s = (execution_time_seconds - (m*60 + h*3600))
+  time = sprintf("%02d:%02d:%02d", h, m, s)
+
+%>
+
+<h2>#<%= id %></h2>
+<%
+  color = "#088A29"
+  color = "brightgreen" if status == Executor::STATUS_RUNNING
+  color = "orange"      if status == Executor::STATUS_RETRYING
+  color = "red"         if status == Executor::STATUS_ERROR
+%>
+  <ul style="color: <%= color %>">
+    <li>Server: <b><%= server_name %></b></li>
+    <li>Group: <b><%= j.group.group_id %></b></li>
+    <li>Action: <%= action %></li>
+    <li>Status: <%= status %></li>
+    <li>Time: <%= time %></li>
+    <% if status != Executor::STATUS_RUNNING %>
+      <li>Results: <span style="color:#777"><%= j.results %></span></li>
+    <% end %>
+
+    <li> <span class="action">
+    <% case status
+        when Executor::STATUS_ERROR %>
+      <a href="#" onclick="chimpd_job_control(this, '/job/<%=id%>/ack')">ack</a> |
+      <a href="#" onclick="chimpd_job_control(this, '/job/<%=id%>/retry')">retry</a>
+    <%  when Executor::STATUS_RUNNING, Executor::STATUS_RETRYING, Executor::STATUS_NONE  %>
+      <a href="#" onclick="chimpd_job_control(this, '/job/<%=id%>/cancel')">cancel</a>
+    <%  when Executor::STATUS_HOLDING %>
+      <a href="#" onclick="chimpd_job_control(this, '/job/<%=id%>/queue')">queue</a>
+      <a href="#" onclick="chimpd_job_control(this, '/job/<%=id%>/cancel')">cancel</a>
+    <%  when Executor::STATUS_DONE %>
+      <a href="#" onclick="chimpd_job_control(this, '/job/<%=id%>/retry')">requeue</a>
+    <% end %>
+    </li>
+  </ul>
+
+<% end %>
+</div>
+
+</body></html>
