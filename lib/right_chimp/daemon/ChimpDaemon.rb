@@ -557,9 +557,6 @@ module Chimp
         end
 
         if req.request_uri.path =~ /jobs\.json$/
-          #load up our json template
-          @template = ERB.new(File.read(File.join(template_path, "all_jobs_json.erb")), nil, ">")
-
           #instance the queue
           queue = ChimpQueue.instance
 
@@ -569,7 +566,11 @@ module Chimp
 
           job_types.each do |type|
             jobs[type] = queue.get_jobs_by_status(type).map do |job|
-              {:id => job.job_id, :name => job.exec.params["right_script"]["name"]}
+              { :id => job.job_id,
+                :server => job.server.params["name"],
+                :name => job.exec.params["right_script"]["name"],
+                :error_message => job.error.nil? ? "" : job.error.message
+              }
             end
           end
 
